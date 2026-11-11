@@ -25,4 +25,14 @@ I use travel-time factors of 1.00, 1.15 and 1.35 for low, medium and high traffi
     python run.py Scenarios/Scenario2 --route H2 N9 --roads-only
     python run.py Scenarios/Scenario2 --route H2 N9
 
-The first route goes via N8 (48.57 s). With traffic included, the fastest estimated route goes via N7 (54.55 s). Times come from different cost models. Responder allocation and final plan generation are pending.
+The first route goes via N8 (48.57 s). With traffic included, the fastest estimated route goes via N7 (54.55 s). Times come from different cost models.
+
+## Generate a response plan
+
+    python run.py Scenarios/Scenario1 --output-dir results/Scenario1
+
+Without an output directory, run.py writes plan.json and statistics.txt in the working directory. The route inspection commands still work.
+
+At each incident release or responder availability event, consider only known, unassigned incidents. Each incident may be skipped or assigned to one free responder with the required capability and a route arriving by its absolute deadline. Backtracking enforces that each responder appears at most once in a simultaneous batch. It maximizes the counts served in priority order (critical, high, medium, low), then minimizes total release-to-arrival time. Exact ties follow input order. After arrival the responder stays at the scene for the service duration and starts subsequent trips there.
+
+This policy optimizes the current dispatch batch. It can miss a better multi-event schedule and its search can be expensive with many simultaneous compatible calls. Deadlines use predicted travel times. The deadline percentage uses all incidents, including unhandled incidents as misses. The average response time includes only handled incidents. All times are in seconds.

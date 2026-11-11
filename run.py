@@ -1,6 +1,7 @@
 import argparse
 from pathlib import Path
 
+from allocation import read_inputs, simulate, write_outputs
 from road_conditions import estimate_graph
 from traffic import adjust_for_traffic
 from routing import fastest_route, load_graph
@@ -10,6 +11,7 @@ def main():
     parser = argparse.ArgumentParser(description="Inspect estimated travel times")
     parser.add_argument("scenario", type=Path)
     parser.add_argument("--route", nargs=2, metavar=("FROM", "TO"))
+    parser.add_argument("--output-dir", type=Path, default=Path("."))
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--roads-only", action="store_true", help="omit the traffic forecast")
     mode.add_argument("--baseline", action="store_true", help="assume every road is open")
@@ -28,7 +30,9 @@ def main():
                 path, seconds = result
                 print(f"{' -> '.join(path)} ({seconds:.2f} s)")
         else:
-            print(f"{len(graph)} nodes, {sum(map(len, graph.values()))} directed roads")
+            responders, incidents = read_inputs(args.scenario)
+            plan, delays = simulate(graph, responders, incidents)
+            print(write_outputs(args.output_dir, plan, delays, len(incidents)), end="")
     except (OSError, ValueError) as error:
         parser.error(str(error))
 
