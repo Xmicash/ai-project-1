@@ -1,14 +1,19 @@
 # Emergency response system
 
-The first milestone computes the fastest route for one responder assuming every road is open. It uses Python 3 and the standard library.
+Run from the repository root using Python 3. No additional packages are required.
 
-Run from the repository root:
-
-    python run.py Scenarios/Scenario1 --route H1 N3
+    python run.py Scenarios/Scenario1 --route N1 N2
+    python run.py Scenarios/Scenario1 --route N1 N2 --baseline
     python -m unittest -v
 
-The first command should print `H1 -> N3 (37.70 s)`. The scenario gives this road a length of 1131 metres and a speed of 30 metres per second.
+With road reports, the first command gives N1 → H1 → N2 (78.60 s). The open-road baseline gives N1 → N2 (51.67 s).
 
-The graph keeps each road direction supplied in the data. Uniform-cost search expands the node with the lowest known travel time. Since all travel times are nonnegative, the first time the destination is removed from the queue its cost is optimal. The predecessor map reconstructs the route.
+## Road conditions and routing
 
-This baseline ignores storm reports and historical traffic. Later milestones will estimate road conditions with Bayesian inference and traffic levels with a hidden Markov model, then use the resulting route costs for constraint-based incident allocation. The final simulation will produce plan.json and statistics.txt.
+Road reports are available at time zero and grouped by directed road. For each possible true state, start with its probability given the local weather. Multiply by the probability of each observed report given that state and its source, then normalize across the three states. This assumes reports are conditionally independent given the true status. Without weather evidence, average the weather-specific priors using the supplied weather probabilities.
+
+For planning, use the most probable state. Omit roads classified as blocked. Congested roads take 1.5 times their normal travel time. For an open road, time in seconds is distance in metres divided by speed in metres per second. Exact ties favour blocked, then congested. Uniform-cost search returns the fastest path in this estimated graph.
+
+For N1 → N2 in Scenario1, the probability of blockage is about 52.7%. The model excludes the road even though congestion is also plausible. This illustrates how choosing one state discards uncertainty. The reverse road has its own reports and is classified as congested.
+
+Traffic forecasting, responder allocation and final plan generation are pending.

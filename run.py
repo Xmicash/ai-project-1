@@ -1,16 +1,20 @@
 import argparse
 from pathlib import Path
 
+from road_conditions import estimate_graph
 from routing import fastest_route, load_graph
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Inspect travel times on open roads")
+    parser = argparse.ArgumentParser(description="Inspect estimated travel times")
     parser.add_argument("scenario", type=Path)
     parser.add_argument("--route", nargs=2, metavar=("FROM", "TO"))
+    parser.add_argument("--baseline", action="store_true", help="assume every road is open")
     args = parser.parse_args()
     try:
         graph = load_graph(args.scenario)
+        if not args.baseline:
+            graph = estimate_graph(args.scenario, graph)
         if args.route:
             result = fastest_route(graph, *args.route)
             if result is None:
